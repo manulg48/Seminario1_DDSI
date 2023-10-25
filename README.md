@@ -1,8 +1,8 @@
 # DDSI
 
-[English] This repository contains the support material developed for the subject Design and Development of Computer Systems (DDSI) at the University of Granada (UGR). This material was developed during the time I taught this subject. It is addressed to the students of this subject, so it is completely in Spanish. 
+[English] This repository contains the support material developed for the subject Design and Development of Information Systems (DDSI) at the University of Granada (UGR). This material was developed during the time I taught this subject. It is addressed to the students of this subject, so it is completely in Spanish. 
 
-[Español] En este repositorio se recoge el material de apoyo desarrollado para la asignatura de Diseño y Desarrollo de Sistemas Informáticos (DDSI) de la Universidad de Granada (UGR). Este material fue desarrollado durante el tiempo que impartí las prácticas de esta asignatura. 
+[Español] En este repositorio se recoge el material de apoyo desarrollado para la asignatura de Diseño y Desarrollo de Sistemas de Información (DDSI) de la Universidad de Granada (UGR). Este material fue desarrollado durante el tiempo que impartí las prácticas de esta asignatura. 
 
 ## PostgreSQL en Anaconda
 
