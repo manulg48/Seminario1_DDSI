@@ -17,7 +17,7 @@ conda install -c anaconda psycopg2 # Instalar driver de Python para PostgreSQL
 **Paso 2.** Inicialización de PostgreSQL y creación de una base de datos. Para ello, abrimos un terminal y ejecutamos los siguientes comandos:
 ```bash
 conda activate DDSI # Activar entorno virtual
-pg_ctl -D ./pgdata # Crear database cluster directory
+initdb ./pgdata # Crear database cluster directory
 pg_ctl -D ./pgdata -l logfile start # Iniciar PostgreSQL
 ```
 
