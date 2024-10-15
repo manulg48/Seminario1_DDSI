@@ -4,7 +4,7 @@
 
 [Español] En este repositorio se recoge el material de apoyo desarrollado para la asignatura de Diseño y Desarrollo de Sistemas de Información (DDSI) de la Universidad de Granada (UGR). Este material fue desarrollado durante el tiempo que impartí las prácticas de esta asignatura. 
 
-## PostgreSQL en Anaconda
+## Instalación de PostgreSQL en Anaconda
 
 **Paso 1.** Creación de un entorno virtual de Anaconda. Instalamos Anaconda desde [aquí](https://www.anaconda.com/products/individual). Una vez instalado, abrimos un terminal y ejecutamos los siguientes comandos:
 ```bash
@@ -32,7 +32,14 @@ psql -l # Listar bases de datos
 psql -d postgres # Conectarse a la base de datos postgres
 ```
 
-Una vez dentro de PostgreSQL, podemos crear una base de datos y una tabla:
+Una vez dentro de PostgreSQL, debemos crear un nuevo usuario y darle permisos de SUPERUSUARIO:
+```bash
+CREATE USER usuario WITH PASSWORD 'password'; # Crear usuario
+ALTER USER usuario WITH SUPERUSER; # Dar permisos de superusuario al usuario
+\q # Salir de PostgreSQL
+```
+
+También podemos crear una base de datos y una tabla:
 ```bash
 \c postgres # Conectarse a la base de datos postgres
 CREATE DATABASE test; # Crear base de datos test
@@ -43,3 +50,13 @@ CREATE DATABASE test; # Crear base de datos test
 \q # Salir de PostgreSQL
 ```
 
+## Seminario 1
+
+Para poder ejecutar el ejemplo correspondiente al Seminario 1 tendremos que crear la base de datos "banco". Después, tenemos que inicializar el estado de la base de datos mediante el script crear_banco.sql, que se encuentra en la carpeta `seminario1`. 
+```bash
+\c postgres # Conectarse a la base de datos postgres
+CREATE DATABASE banco; # Crear base de datos test
+\c banco # Conectarse a la base de datos test
+\i crear_banco.sql # Ejecutar script de SQL para crear tabla
+```
+No te olvides de modificar el fichero `ejemplo.py` con los datos de tu usuario y contraseña de PostgreSQL.
