@@ -1,0 +1,6 @@
+psql -d postgres : conectarse a la base de datos postgres
+
+\c <tabla> <usuario> : conectarse a una tabla con un usuario específico
+\i <archivo> : Ejecutar ordenes sql desde un archivo
+\l : Listar bases de datos
+\q : salir de postgresql
