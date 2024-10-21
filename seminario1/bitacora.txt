@@ -1,0 +1,25 @@
+Hemos decidido que el lenguaje de la aplicación será python.
+
+Para crear el entorno en el que vamos a desarrollar la aplicación hemos decidido utilizar un entorno virtual de python el cual contendrá:
+  - PostgreSQL
+  - psycopg2
+
+Para ello hemos creado el entorno mediante:
+   $ python3 -m venv venv/
+
+y lo activamos con:
+  $ source venv/bin/activate
+
+para instalar el driver que conectará el lenguaje de programación con la base de datos PostgreSQL ejecutamos:
+  $ python -m pip install psycopg2
+
+Una bez tenemos PostgreSQL instalado en el sistema, creamos el directorio que contendrá el cluster de todas las bases de datos e iniciamos PostgreSQL:
+  $ initdb ./pgdata
+  $ pg_ctl -D ./pgdata -l logfile start
+
+Nos conectamos a PostgreSQL y creamos el usuario con el cual se conectará la aplicación a la base de datos.
+  $ psql -d postgres 
+  $ CREATE USER usuario WITH PASSWORD 'password';
+  $ ALTER USER usuario WITH SUPERUSER;
+
+Una vez creado nos conectamos a postgres mediante el usuario que acabamos de crear y creamos la base de datos 
