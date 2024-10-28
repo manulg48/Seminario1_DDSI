@@ -1,13 +1,14 @@
-import psycopg2 as pg
+import pyodbc
 
-# Conectarse a la base de datos
-conn = pg.connect(
-    database='banco',
-    user='x8267949',
-    password='x8267949',
-    host='oracle0.ugr.es',
+# Conectarse a la base de datos Oracle
+conn = pyodbc.connect(
+    'DRIVER={Oracle in OraClient11g_home1};'
+    'DBQ=oracle0.ugr.es;'
+    'UID=x8267949;'
+    'PWD=x8267949;'
 )
 conn.autocommit = False
+
 id_origen = input('Ingrese el identificador de la cuenta de la que desea sacar dinero: ')
 id_destino = input('Ingrese el identificador de la cuenta a la que desea ingresar dinero: ')
 cantidad = input('Ingrese la cantidad de dinero que desea sacar: ')
@@ -16,38 +17,35 @@ cantidad = float(cantidad)
 # Crear un cursor
 cur = conn.cursor()
 
-cur = conn.cursor()
 cur.execute("BEGIN;")
-cur.execute("SAVEPOINT s1;")
 
 # Comprobar que las cuentas existen
 try:
-    cur.execute(f"SELECT idcuenta FROM cuenta WHERE idcuenta = {id_origen} FOR UPDATE;")
+    cur.execute(f"SELECT idcuenta FROM cuenta WHERE idcuenta = ? FOR UPDATE;", (id_origen,))
     data = cur.fetchall()
     if len(data) == 0:
         raise Exception("La cuenta de origen no existe")
-    cur.execute(f"SELECT idcuenta FROM cuenta WHERE idcuenta = {id_destino} FOR UPDATE;")
+    
+    cur.execute(f"SELECT idcuenta FROM cuenta WHERE idcuenta = ? FOR UPDATE;", (id_destino,))
     data = cur.fetchall()
     if len(data) == 0:
         raise Exception("La cuenta de destino no existe")
 except Exception as e:
-    cur.execute("ROLLBACK TO SAVEPOINT s1;")
-    cur.execute("RELEASE SAVEPOINT s1;")
+    conn.rollback()
     raise e
 
 # Comprobar que hay suficiente saldo
 try:
-    cur.execute(f"SELECT saldo FROM cuenta WHERE idcuenta = {id_origen} FOR UPDATE;")
+    cur.execute(f"SELECT saldo FROM cuenta WHERE idcuenta = ? FOR UPDATE;", (id_origen,))
     saldo = cur.fetchone()[0]
     if saldo < cantidad:
         raise Exception("No hay suficiente saldo")
 except Exception as e:
-    cur.execute("ROLLBACK TO SAVEPOINT s1;")
-    cur.execute("RELEASE SAVEPOINT s1;")
+    conn.rollback()
     raise e
 
 # Obtener el identificador de la nueva transacción
-cur.execute(f"SELECT MAX(idmov) FROM movimiento;")
+cur.execute("SELECT MAX(idmov) FROM movimiento;")
 last_idmove = cur.fetchone()[0]
 if last_idmove is None:
     last_idmove = 0
@@ -59,31 +57,28 @@ new_idmov = last_idmove + 1
 
 # Primer paso: retirar el dinero de la cuenta origen
 try:
-    cur.execute(f"UPDATE cuenta SET saldo = saldo - {cantidad} WHERE idcuenta = {id_origen};")
+    cur.execute(f"UPDATE cuenta SET saldo = saldo - ? WHERE idcuenta = ?;", (cantidad, id_origen))
 except Exception as e:
-    cur.execute("ROLLBACK TO SAVEPOINT s1;")
-    cur.execute("RELEASE SAVEPOINT s1;")
+    conn.rollback()
     raise e
 
 # Segundo paso: ingresar el dinero en la cuenta destino
-# Preguntar al usuario si quiere continuar
 print("Dinero retirado de la cuenta origen")
 resp = input(f"¿Seguro que quiere ingresar el dinero en la cuenta {id_destino}? (s/n): ")
 if resp != 's':
-    # Si el usuario no quiere continuar, deshacer los cambios
-    cur.execute("ROLLBACK TO SAVEPOINT s1;")
-    cur.execute("RELEASE SAVEPOINT s1;")
+    conn.rollback()
     raise Exception("Operación cancelada por el usuario")
 else:
-    # Si el usuario quiere continuar, hacer los cambios
     try:
-        cur.execute(f"UPDATE cuenta SET saldo = saldo + {cantidad} WHERE idcuenta = {id_destino};")
-        cur.execute(f"INSERT INTO movimiento (idmov, idcuenta, cantidad) VALUES ({new_idmov}, {id_origen}, {-cantidad});")
-        cur.execute(f"INSERT INTO movimiento (idmov, idcuenta, cantidad) VALUES ({new_idmov+1}, {id_destino}, {cantidad});")
+        cur.execute(f"UPDATE cuenta SET saldo = saldo + ? WHERE idcuenta = ?;", (cantidad, id_destino))
+        cur.execute(f"INSERT INTO movimiento (idmov, idcuenta, cantidad) VALUES (?, ?, ?);", (new_idmov, id_origen, -cantidad))
+        cur.execute(f"INSERT INTO movimiento (idmov, idcuenta, cantidad) VALUES (?, ?, ?);", (new_idmov + 1, id_destino, cantidad))
         conn.commit()
     except Exception as e:
-        cur.execute("ROLLBACK TO SAVEPOINT s1;")
-        cur.execute("RELEASE SAVEPOINT s1;")
+        conn.rollback()
         raise e
     print("Dinero ingresado en la cuenta destino")
-    cur.close()
+
+cur.close()
+conn.close()
+
