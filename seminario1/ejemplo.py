@@ -3,9 +3,9 @@ import pyodbc
 # Conectarse a la base de datos Oracle
 conn = pyodbc.connect(
     'DRIVER={Oracle in OraClient11g_home1};'
-    'DBQ=nombre_del_servicio;'
-    'UID=usuario;'
-    'PWD=password;'
+    'DBQ=oracle0.ugr.es;'
+    'UID=x8267949;'
+    'PWD=x8267949;'
 )
 conn.autocommit = False
 
