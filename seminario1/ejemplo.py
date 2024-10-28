@@ -3,9 +3,9 @@ import psycopg2 as pg
 # Conectarse a la base de datos
 conn = pg.connect(
     database='banco',
-    user='usuario',
-    password='password',
-    host='localhost',
+    user='x8267949',
+    password='x8267949',
+    host='oracle0.ugr.es',
 )
 conn.autocommit = False
 id_origen = input('Ingrese el identificador de la cuenta de la que desea sacar dinero: ')
