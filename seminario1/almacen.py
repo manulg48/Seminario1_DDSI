@@ -16,6 +16,19 @@ cursor = conn.cursor()
 def opcion1():
     #Borrado
 
+    borrar = ["stock","pedido","detalle_pedido"]
+    for tabla in borrar:
+        try:
+            cursor.execute(f"DROP TABLE {tabla}")
+            print(f"La tabla {tabla} ha sido eliminida de la base de datos.")
+        except oracledb.DatabaseError as err:
+            error = err.args
+            if error.code == 942:
+                print(f"{tabla} no existe")
+            else:
+                print(f"Error al eliminar la tabla {tabla}: {error.message}")
+
+
     #Creacion
 
     # Crear la tabla stock
