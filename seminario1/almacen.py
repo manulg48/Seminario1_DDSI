@@ -18,6 +18,38 @@ def opcion1():
 
     #Creacion
 
+    # Crear la tabla stock
+    cursor.execute("""
+        CREATE TABLE stock (
+            Cproducto INTEGER PRIMARY KEY,
+            Cantidad INTEGER
+        )
+    """)
+    print("Tabla 'stock' creada.")
+
+    # Crear la tabla pedido
+    cursor.execute("""
+        CREATE TABLE pedido (
+            Cpedido INTEGER PRIMARY KEY,
+            Ccliente INTEGER,
+            Fecha_pedido DATE
+        )
+    """)
+    print("Tabla 'pedido' creada.")
+
+    # Crear la tabla detalle_pedido
+    cursor.execute("""
+        CREATE TABLE detalle_pedido (
+            Cpedido INTEGER,
+            Cproducto INTEGER,
+            Cantidad INTEGER,
+            PRIMARY KEY (Cpedido, Cproducto),
+            FOREIGN KEY (Cpedido) REFERENCES pedido(Cpedido),
+            FOREIGN KEY (Cproducto) REFERENCES stock(Cproducto)
+        )
+    """)
+    print("Tabla 'detalle_pedido' creada.")
+
     #Insercion
 
 def opcion2():
