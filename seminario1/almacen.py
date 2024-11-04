@@ -12,7 +12,95 @@ password = "x8267949"
 conn = oracledb.connect(user=usuario, password=password, dsn=dsn)
 conn.autocommit = False  # Desactivar autocommit para manejo manual de transacciones
 cursor = conn.cursor()
+
     
+def opcion2():
+
+    os.system('clear')
+    print ( '\nHas seleccionado la opción 2 "Dar de alta nuevo pedido" ' )
+    
+    
+    conn.execute("SAVEPOINT PrincipioOpcion2")
+    
+    #Capturar datos básicos del pedido
+    Ccliente = int(input(' Ingrese su numero de cliente: ' )  
+    fecha_actual = datetime.now().strftime("%d/%m/%Y")
+    
+    #Coger el valor siguiente de Cpedido
+    cursor.execute("SELECT MAX(Cpedido) FROM pedido;")
+    last_Cpedido = cur.fetchone()[0]
+    new_Cpedido = last_Cpedido + 1 
+
+    try:
+        cursor.execute ( f"INSERT INTO pedido (Cpedido, Ccliente, Fecha_pedido) VALUES (?, ?, ?);", ( new_Cpedido, Ccliente, fecha_actual) )
+        except Exception as e:
+            conn.rollback("ROLLBACK TO PrincipioOpcion2")
+        raise e
+            
+    print( 'Elija qué opción quiere hacer del menú 1-4' )
+    print( '\t1. Añadir detalle de producto' )
+    print( '\t2. Eliminar todos los detalles de producto' )
+    print( '\t3. Cancelar pedido' )
+    print( '\t4. Finalizar pedido' )
+
+    opcion = int(input(' Ingrese la opción: '))
+    
+    match opcion:
+        case 1:
+        
+            #Capturar datos de articulo / cantidad
+            Cproducto = int(input( 'Ingrese producto: ' ))
+            cantidad = float(input(' Ingrese cantidad: '))
+            cursor.execute("SAVEPOINT AntesDeIngresarPedido")
+            #Ingresar en la tabla Detalle-Pedido
+            try:
+                
+                cursor.execute(f"SELECT cantidad FROM stock WHERE Cproducto = ?;", (Cproducto) )
+                stock = cur.fetchone()[0]
+                
+                
+                
+                if ( stock >= cantidad ):  # Si hay stock
+                    cursor.execute(f"INSERT INTO detalle_pedido (Cpedido, Cproducto, cantidad) VALUES (?, ?, ?);",  (new_Cpedido, Cproducto, cantidad)
+                    cursor.execute(f"UPDATE stock SET stock = stock + ? WHERE Cproducto = ?;", (-cantidad, Cproducto))
+                 
+                 else:              #Si no hay stock
+                    print( 'No hay stock de este producto' )
+                    
+                    
+                    
+                    
+            except Exception as e:
+                conn.rollback()
+            raise e
+                
+                
+            op = str(input('¿Quiere solicitar mas articulos? S/N\n'))
+            if( op.lower() == 's' ): 
+                opcion2()
+            else:
+                print('\tMuchas gracias maquina ;)' )
+                
+                
+        case 2:
+            #Hacer rollback
+            cursor.execute( "ROLLBACK TO AntesDeIngresarPedido")
+            opcion2()
+            
+        case 3:
+            #Volver al menu principal
+            cursor.execute( "ROLLBACK TO PrincipioOpcion2" )
+            menu()
+        case 4:
+            #Hacer commit
+            conn.commit()
+            menu()
+        case _:
+            print(' Ups, te has equivocado de numero, vuelve a intentarlo...')
+            opcion2()
+
+
+
 def opcion1():
     #Borrado
 
@@ -89,43 +177,6 @@ def opcion1():
     # Confirmar los cambios
     conn.commit()
     print("Las 10 tuplas han sido insertadas exitosamente en la tabla 'Stock'.")
-
-
-def opcion2():
-    os.system('clear')
-    print ( '\nBuenas Fran!! :)' )
-    print( 'Elija qué opción quiere hacer del menú 1-4' )
-    print( '\t1. Añadir detalle de producto' )
-    print( '\t2. Eliminar todos los detalles de producto' )
-    print( '\t3. Cancelar pedido' )
-    print( '\t4. Finalizar pedido' )
-
-    opcion = int(input(' Ingrese la opción: '))
-    
-    match opcion:
-        case 1:
-            articulo = int(input( 'Ingrese articulo: ' ))
-            cantidad = float(input(' Ingrese cantidad: '))
-            #Ingresar en la tabla Detalle-Pedido
-            
-            
-            op = str(input('¿Quiere ingresar mas articulos? S/N\n'))
-            if( op.lower() == 's' ): 
-                menu()
-            else:
-                print('\tMuchas gracias maquina ;)' )
-        case 2:
-            #Hacer rollback
-            print('')
-        case 3:
-            #Volver al menu principal
-            menu()
-        case 4:
-            #Hacer commit
-            menu()
-        case _:
-            print(' Ups, te has equivocado de numero, vuelve a intentarlo...')
-            menu()
 
 
 def opcion4():
