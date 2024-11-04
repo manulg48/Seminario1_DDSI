@@ -13,6 +13,13 @@ conn = oracledb.connect(user=usuario, password=password, dsn=dsn)
 conn.autocommit = False  # Desactivar autocommit para manejo manual de transacciones
 cursor = conn.cursor()
     
+def opcion1():
+    #Borrado
+
+    #Creacion
+
+    #Insercion
+
 def opcion2():
     os.system('clear')
     print ( '\nBuenas Fran!! :)' )
