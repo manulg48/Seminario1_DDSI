@@ -65,6 +65,32 @@ def opcion1():
 
     #Insercion
 
+    # Tuplas predefinidas a insertar
+    tuplas_stock = [
+        (101, 50),
+        (102, 120),
+        (103, 80),
+        (104, 200),
+        (105, 150),
+        (106, 60),
+        (107, 30),
+        (108, 90),
+        (109, 40),
+        (110, 300)
+    ]
+
+    for cproducto, cantidad in tuplas_stock:
+        cursor.execute(
+            "INSERT INTO Stock (Cproducto, Cantidad) VALUES (:1, :2)",
+            (cproducto, cantidad)
+        )
+        print(f"Insertado producto {cproducto} con cantidad {cantidad}")
+
+    # Confirmar los cambios
+    conn.commit()
+    print("Las 10 tuplas han sido insertadas exitosamente en la tabla 'Stock'.")
+
+
 def opcion2():
     os.system('clear')
     print ( '\nBuenas Fran!! :)' )
