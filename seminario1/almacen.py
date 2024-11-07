@@ -177,6 +177,16 @@ def opcion1():
     conn.commit()
     print("Las 10 tuplas han sido insertadas exitosamente en la tabla 'Stock'.")
 
+def opcion3():
+    queries = {"Clientes":"SELECT * FROM pedido","Pedidos":"SELECT * FROM stock","Productos":"SELECT * FROM detalle_pedido"}
+    for title, query in queries.items():
+        print(f"\n--- Resultados de {title} ---")
+        cursor.execute(query)
+
+        column_names = [col[0] for col in cursor.description]
+        print(" | ".join(column_names))
+        for row in cursor:
+                print(" | ".join(map(str, row)))
 
 def opcion4():
     print( 'Conexión cerrada, Bye...' )
