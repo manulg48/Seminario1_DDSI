@@ -23,7 +23,7 @@ def opcion2():
     conn.execute("SAVEPOINT PrincipioOpcion2")
     
     #Capturar datos básicos del pedido
-    Ccliente = int(input(' Ingrese su numero de cliente: ' )  
+    Ccliente = int(input(' Ingrese su numero de cliente: ' ))
     fecha_actual = datetime.now().strftime("%d/%m/%Y")
     
     #Coger el valor siguiente de Cpedido
@@ -33,8 +33,8 @@ def opcion2():
 
     try:
         cursor.execute ( f"INSERT INTO pedido (Cpedido, Ccliente, Fecha_pedido) VALUES (?, ?, ?);", ( new_Cpedido, Ccliente, fecha_actual) )
-        except Exception as e:
-            conn.rollback("ROLLBACK TO PrincipioOpcion2")
+    except Exception as e:
+        conn.rollback("ROLLBACK TO PrincipioOpcion2")
         raise e
             
     print( 'Elija qué opción quiere hacer del menú 1-4' )
@@ -61,15 +61,11 @@ def opcion2():
                 
                 
                 if ( stock >= cantidad ):  # Si hay stock
-                    cursor.execute(f"INSERT INTO detalle_pedido (Cpedido, Cproducto, cantidad) VALUES (?, ?, ?);",  (new_Cpedido, Cproducto, cantidad)
+                    cursor.execute(f"INSERT INTO detalle_pedido (Cpedido, Cproducto, cantidad) VALUES (?, ?, ?);",  (new_Cpedido, Cproducto, cantidad))
                     cursor.execute(f"UPDATE stock SET stock = stock + ? WHERE Cproducto = ?;", (-cantidad, Cproducto))
                  
-                 else:              #Si no hay stock
-                    print( 'No hay stock de este producto' )
-                    
-                    
-                    
-                    
+                else:              #Si no hay stock
+                    print( 'No hay stock de este producto' )       
             except Exception as e:
                 conn.rollback()
             raise e
