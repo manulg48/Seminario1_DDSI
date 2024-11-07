@@ -1,5 +1,6 @@
 import os
 import oracledb
+import datetime
 import time
 
 # Configura la conexión a la base de datos Oracle
@@ -20,21 +21,22 @@ def opcion2():
     print ( '\nHas seleccionado la opción 2 "Dar de alta nuevo pedido" ' )
     
     
-    conn.execute("SAVEPOINT PrincipioOpcion2")
+    cursor.execute("SAVEPOINT PrincipioOpcion2")
     
     #Capturar datos básicos del pedido
     Ccliente = int(input(' Ingrese su numero de cliente: ' ))
-    fecha_actual = datetime.now().strftime("%d/%m/%Y")
+    fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
     
     #Coger el valor siguiente de Cpedido
-    cursor.execute("SELECT MAX(Cpedido) FROM pedido;")
-    last_Cpedido = cur.fetchone()[0]
+    cursor.execute("SELECT MAX(Cpedido) FROM pedido")
+    last_Cpedido =   cursor.fetchone()[0]
     new_Cpedido = last_Cpedido + 1 
-
+    
     try:
-        cursor.execute ( f"INSERT INTO pedido (Cpedido, Ccliente, Fecha_pedido) VALUES (?, ?, ?);", ( new_Cpedido, Ccliente, fecha_actual) )
+        print( {new_Cpedido}, {Ccliente}, {fecha_actual})
+        cursor.execute ( f"INSERT INTO pedido VALUES ({new_Cpedido}, {Ccliente}, TO_DATE('{fecha_actual}', 'DD/MM/YYYY') )" )
     except Exception as e:
-        conn.rollback("ROLLBACK TO PrincipioOpcion2")
+        cursor.execute("ROLLBACK TO PrincipioOpcion2")
         raise e
             
     print( 'Elija qué opción quiere hacer del menú 1-4' )
@@ -56,12 +58,12 @@ def opcion2():
             try:
                 
                 cursor.execute(f"SELECT cantidad FROM stock WHERE Cproducto = ?;", (Cproducto) )
-                stock = cur.fetchone()[0]
+                stock = cursor.fetchone()[0]
                 
                 
                 
                 if ( stock >= cantidad ):  # Si hay stock
-                    cursor.execute(f"INSERT INTO detalle_pedido (Cpedido, Cproducto, cantidad) VALUES (?, ?, ?);",  (new_Cpedido, Cproducto, cantidad))
+                    cursor.execute(f"INSERT INTO detalle_pedido ({Cpedido}, {Cproducto}, {cantidad}) VALUES (?, ?, ?);",  (new_Cpedido, Cproducto, cantidad))
                     cursor.execute(f"UPDATE stock SET stock = stock + ? WHERE Cproducto = ?;", (-cantidad, Cproducto))
                  
                 else:              #Si no hay stock
@@ -69,15 +71,16 @@ def opcion2():
             except Exception as e:
                 conn.rollback()
             raise e
-                
-                
+           
             op = str(input('¿Quiere solicitar mas articulos? S/N\n'))
+
             if( op.lower() == 's' ): 
                 opcion2()
             else:
                 print('\tMuchas gracias maquina ;)' )
                 
-                
+        
+           
         case 2:
             #Hacer rollback
             cursor.execute( "ROLLBACK TO AntesDeIngresarPedido")
@@ -165,7 +168,7 @@ def opcion1():
 
     for cproducto, cantidad in tuplas_stock:
         cursor.execute(
-            "INSERT INTO Stock (Cproducto, Cantidad) VALUES (:1, :2)",
+            "INSERT INTO Stock ({Cproducto}, {Cantidad}) VALUES (:1, :2)",
             (cproducto, cantidad)
         )
         print(f"Insertado producto {cproducto} con cantidad {cantidad}")
@@ -192,7 +195,7 @@ def menu():
     print( '\t4. Salir programa y cerrar conexión ' )
     
     
-    opcion = input(' Ingrese la opción: ')
+    opcion = int(input(' Ingrese la opción: '))
     
     match opcion:
         case 1: 
