@@ -33,7 +33,6 @@ def opcion2():
     new_Cpedido = last_Cpedido + 1 
     
     try:
-        print( {new_Cpedido}, {Ccliente}, {fecha_actual})
         cursor.execute ( f"INSERT INTO pedido VALUES ({new_Cpedido}, {Ccliente}, TO_DATE('{fecha_actual}', 'DD/MM/YYYY') )" )
     except Exception as e:
         cursor.execute("ROLLBACK TO PrincipioOpcion2")
@@ -47,43 +46,43 @@ def opcion2():
 
     opcion = int(input(' Ingrese la opción: '))
     
+    cursor.execute("SAVEPOINT Antes")
+
+
     match opcion:
         case 1:
-        
+            
+            cursor.execute("SAVEPOINT AntesDeIngresarPedido")
+
             #Capturar datos de articulo / cantidad
             Cproducto = int(input( 'Ingrese producto: ' ))
-            cantidad = float(input(' Ingrese cantidad: '))
-            cursor.execute("SAVEPOINT AntesDeIngresarPedido")
+            cantidad = int(input(' Ingrese cantidad: '))
             #Ingresar en la tabla Detalle-Pedido
             try:
                 
-                cursor.execute(f"SELECT cantidad FROM stock WHERE Cproducto = ?;", (Cproducto) )
-                stock = cursor.fetchone()[0]
+                cursor.execute(f"SELECT cantidad FROM stock WHERE Cproducto = {Cproducto}")
+                stock = cursor.fetchone()
                 
-                
-                
-                if ( stock >= cantidad ):  # Si hay stock
-                    cursor.execute(f"INSERT INTO detalle_pedido ({Cpedido}, {Cproducto}, {cantidad}) VALUES (?, ?, ?);",  (new_Cpedido, Cproducto, cantidad))
-                    cursor.execute(f"UPDATE stock SET stock = stock + ? WHERE Cproducto = ?;", (-cantidad, Cproducto))
-                 
+                if ( stock[0] is not None and stock[0] >= cantidad ):  # Si hay stock
+                    cursor.execute(f"INSERT INTO detalle_pedido VALUES ({new_Cpedido}, {Cproducto}, {cantidad})" )
+                    cursor.execute(f"UPDATE stock SET cantidad = cantidad + {-cantidad} WHERE Cproducto = {Cproducto}")
+                    cursor.execute(f"UPDATE detalle_pedido SET cantidad = cantidad + {-cantidad} WHERE Cproducto = {Cproducto}")
                 else:              #Si no hay stock
-                    print( 'No hay stock de este producto' )       
-            except Exception as e:
-                conn.rollback()
-            raise e
-           
-            op = str(input('¿Quiere solicitar mas articulos? S/N\n'))
+                    print( 'No hay stock de este producto, presione Enter para continuar' ) 
+                    input()
 
-            if( op.lower() == 's' ): 
-                opcion2()
-            else:
-                print('\tMuchas gracias maquina ;)' )
+            except Exception as e:
+                cursor.execute("ROLLBACK TO AntesDeIngresarPedido")
+                raise e
+           
+
+            opcion2()
                 
         
            
         case 2:
             #Hacer rollback
-            cursor.execute( "ROLLBACK TO AntesDeIngresarPedido")
+            cursor.execute( "ROLLBACK TO Antes")
             opcion2()
             
         case 3:
@@ -101,84 +100,60 @@ def opcion2():
 
 
 def opcion1():
+        
     #Borrado
-
-    borrar = ["stock","pedido","detalle_pedido"]
-    for tabla in borrar:
-        try:
-            cursor.execute(f"DROP TABLE {tabla}")
-            print(f"La tabla {tabla} ha sido eliminida de la base de datos.")
-        except oracledb.DatabaseError as err:
-            error = err.args
-            if error.code == 942:
-                print(f"{tabla} no existe")
-            else:
-                print(f"Error al eliminar la tabla {tabla}: {error.message}")
+    try:
+        cursor.execute(f"DROP TABLE detalle_pedido")
+        cursor.execute(f"DROP TABLE stock")
+        cursor.execute(f"DROP TABLE pedido")
+    except oracledb.DatabaseError as e:
+        print(f"Error al eliminar las tablas")
+        raise e
 
 
     #Creacion
 
     # Crear la tabla stock
-    cursor.execute("""
-        CREATE TABLE stock (
-            Cproducto INTEGER PRIMARY KEY,
-            Cantidad INTEGER
-        )
-    """)
+    cursor.execute("CREATE TABLE stock (Cproducto INTEGER PRIMARY KEY,Cantidad INTEGER)")
     print("Tabla 'stock' creada.")
 
     # Crear la tabla pedido
-    cursor.execute("""
-        CREATE TABLE pedido (
-            Cpedido INTEGER PRIMARY KEY,
-            Ccliente INTEGER,
-            Fecha_pedido DATE
-        )
-    """)
+    cursor.execute("CREATE TABLE pedido (Cpedido INTEGER PRIMARY KEY,Ccliente INTEGER,Fecha_pedido DATE)")
     print("Tabla 'pedido' creada.")
 
     # Crear la tabla detalle_pedido
-    cursor.execute("""
-        CREATE TABLE detalle_pedido (
-            Cpedido INTEGER,
-            Cproducto INTEGER,
-            Cantidad INTEGER,
-            PRIMARY KEY (Cpedido, Cproducto),
-            FOREIGN KEY (Cpedido) REFERENCES pedido(Cpedido),
-            FOREIGN KEY (Cproducto) REFERENCES stock(Cproducto)
-        )
-    """)
+    cursor.execute("CREATE TABLE detalle_pedido ( Cpedido INTEGER, Cproducto INTEGER,Cantidad INTEGER,PRIMARY KEY (Cpedido, Cproducto),FOREIGN KEY (Cpedido) REFERENCES pedido(Cpedido),FOREIGN KEY (Cproducto) REFERENCES stock(Cproducto))")
     print("Tabla 'detalle_pedido' creada.")
 
     #Insercion
 
     # Tuplas predefinidas a insertar
-    tuplas_stock = [
-        (101, 50),
-        (102, 120),
-        (103, 80),
-        (104, 200),
-        (105, 150),
-        (106, 60),
-        (107, 30),
-        (108, 90),
-        (109, 40),
-        (110, 300)
-    ]
+    tuplas_stock = {
+        1:50,
+        2:120,
+        3:80,
+        4:200,
+        5:150,
+        6:60,
+        7:30,
+        8:90,
+        9:40,
+        10:300
+    }
 
-    for cproducto, cantidad in tuplas_stock:
-        cursor.execute(
-            "INSERT INTO Stock ({Cproducto}, {Cantidad}) VALUES (:1, :2)",
-            (cproducto, cantidad)
-        )
+    for cproducto, cantidad in tuplas_stock.items():
+        cursor.execute( f"INSERT INTO stock VALUES ({cproducto}, {cantidad})")
         print(f"Insertado producto {cproducto} con cantidad {cantidad}")
 
     # Confirmar los cambios
     conn.commit()
     print("Las 10 tuplas han sido insertadas exitosamente en la tabla 'Stock'.")
 
+
+
+
 def opcion3():
-    queries = {"Clientes":"SELECT * FROM pedido","Pedidos":"SELECT * FROM stock","Productos":"SELECT * FROM detalle_pedido"}
+    queries = {"Pedido":"SELECT * FROM pedido","Stock":"SELECT * FROM stock","Detalle_Pedido":"SELECT * FROM detalle_pedido"}
     for title, query in queries.items():
         print(f"\n--- Resultados de {title} ---")
         cursor.execute(query)
@@ -190,7 +165,7 @@ def opcion3():
 
 def opcion4():
     print( 'Conexión cerrada, Bye...' )
-    time.sleep(100)
+    time.sleep(2)
     cursor.close()
     conn.close()
     
@@ -216,6 +191,9 @@ def menu():
             opcion3()
         case 4: 
             opcion4()
+        case _:
+            print(' Ups, te has equivocado de numero, vuelve a intentarlo...')
+            menu()
             
     
 menu()
