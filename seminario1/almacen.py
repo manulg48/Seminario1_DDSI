@@ -14,45 +14,52 @@ conn = oracledb.connect(user=usuario, password=password, dsn=dsn)
 conn.autocommit = False  # Desactivar autocommit para manejo manual de transacciones
 cursor = conn.cursor()
 
-    
-def opcion2():
 
-    os.system('clear')
-    print ( '\nHas seleccionado la opción 2 "Dar de alta nuevo pedido" ' )
-    
-    
-    cursor.execute("SAVEPOINT PrincipioOpcion2")
+
+def credenciales():
+     #Coger el valor siguiente de Cpedido
+    cursor.execute("SELECT MAX(Cpedido) FROM pedido")
+    last_Cpedido = cursor.fetchone()[0]
+    if last_Cpedido is None:
+     new_Cpedido = 1
+    else:
+        new_Cpedido = last_Cpedido + 1 
     
     #Capturar datos básicos del pedido
     Ccliente = int(input(' Ingrese su numero de cliente: ' ))
+    print('Cpedido y Fecha insertados')
     fecha_actual = datetime.date.today().strftime("%d/%m/%Y")
-    
-    #Coger el valor siguiente de Cpedido
-    cursor.execute("SELECT MAX(Cpedido) FROM pedido")
-    last_Cpedido =   cursor.fetchone()[0]
-    new_Cpedido = last_Cpedido + 1 
     
     try:
         cursor.execute ( f"INSERT INTO pedido VALUES ({new_Cpedido}, {Ccliente}, TO_DATE('{fecha_actual}', 'DD/MM/YYYY') )" )
+        cursor.execute("SAVEPOINT PedidoCreado")
+
     except Exception as e:
-        cursor.execute("ROLLBACK TO PrincipioOpcion2")
+        print("Error al ingresar datos")
         raise e
-            
+    
+    return (Ccliente, new_Cpedido)
+    
+
+def opcion2(Ccliente,new_Cpedido):
+
+    os.system('clear')
+
+    cursor.execute("SAVEPOINT Antes")
+
+
     print( 'Elija qué opción quiere hacer del menú 1-4' )
     print( '\t1. Añadir detalle de producto' )
     print( '\t2. Eliminar todos los detalles de producto' )
     print( '\t3. Cancelar pedido' )
     print( '\t4. Finalizar pedido' )
-
     opcion = int(input(' Ingrese la opción: '))
     
-    cursor.execute("SAVEPOINT Antes")
 
 
     match opcion:
         case 1:
             
-            cursor.execute("SAVEPOINT AntesDeIngresarPedido")
 
             #Capturar datos de articulo / cantidad
             Cproducto = int(input( 'Ingrese producto: ' ))
@@ -66,28 +73,25 @@ def opcion2():
                 if ( stock[0] is not None and stock[0] >= cantidad ):  # Si hay stock
                     cursor.execute(f"INSERT INTO detalle_pedido VALUES ({new_Cpedido}, {Cproducto}, {cantidad})" )
                     cursor.execute(f"UPDATE stock SET cantidad = cantidad + {-cantidad} WHERE Cproducto = {Cproducto}")
-                    cursor.execute(f"UPDATE detalle_pedido SET cantidad = cantidad + {-cantidad} WHERE Cproducto = {Cproducto}")
                 else:              #Si no hay stock
                     print( 'No hay stock de este producto, presione Enter para continuar' ) 
                     input()
 
             except Exception as e:
-                cursor.execute("ROLLBACK TO AntesDeIngresarPedido")
+                print('Error al insertar datos del articulo y cantidad')
                 raise e
            
-
-            opcion2()
+            opcion2(Ccliente, new_Cpedido)
+            
                 
         
            
         case 2:
-            #Hacer rollback
-            cursor.execute( "ROLLBACK TO Antes")
-            opcion2()
-            
+            cursor.execute("ROLLBACK TO PedidoCreado")
+            opcion2(Ccliente, new_Cpedido)
         case 3:
             #Volver al menu principal
-            cursor.execute( "ROLLBACK TO PrincipioOpcion2" )
+            cursor.execute("ROLLBACK TO AntesPedido")
             menu()
         case 4:
             #Hacer commit
@@ -95,7 +99,7 @@ def opcion2():
             menu()
         case _:
             print(' Ups, te has equivocado de numero, vuelve a intentarlo...')
-            opcion2()
+            opcion2(Ccliente, new_Cpedido)
 
 
 
@@ -148,7 +152,9 @@ def opcion1():
     # Confirmar los cambios
     conn.commit()
     print("Las 10 tuplas han sido insertadas exitosamente en la tabla 'Stock'.")
-
+    print('\n\t\tPulsa enter para volver al menu')
+    input()
+    menu()
 
 
 
@@ -162,6 +168,9 @@ def opcion3():
         print(" | ".join(column_names))
         for row in cursor:
                 print(" | ".join(map(str, row)))
+    print('\n\t\tPulsa enter para volver al menu')
+    input()
+    menu()
 
 def opcion4():
     print( 'Conexión cerrada, Bye...' )
@@ -186,7 +195,10 @@ def menu():
         case 1: 
             opcion1()
         case 2:
-            opcion2()
+            print ( '\nHas seleccionado la opción 2 "Dar de alta nuevo pedido" ' )
+            cursor.execute("SAVEPOINT AntesPedido")
+            cred = credenciales()
+            opcion2(cred[0], cred[1])
         case 3: 
             opcion3()
         case 4: 
